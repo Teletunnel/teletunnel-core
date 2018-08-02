@@ -38,5 +38,8 @@
   "devDependencies": {
     "aegir": "^15.1.0",
     "teletunnel-protocols": "~0.1.0"
-  }
+  },
+  "contributors": [
+    "Maciej Krüger <mkg20001@gmail.com>"
+  ]
 }
