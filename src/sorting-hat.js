@@ -1,5 +1,8 @@
 'use strict'
 
+const debug = require('debug')
+const log = debug('teletunnel:core:sorting-hat')
+
 const fwAddr = require('forward-addr')
 const wrapper = require('./wrapper')
 const pull = require('pull-stream')
@@ -8,6 +11,8 @@ function default404 (conn, connState) {
   pull(pull.values([]), conn, pull.abort(true))
 }
 
+// TODO: fix "functions in loop"
+
 module.exports = async function sortingHat (conn, {timeout, protocols, handlers, on404}) {
   if (!on404) { on404 = default404 }
 
@@ -15,7 +20,13 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
   let found = false
 
   while (true) {
+    log('try detect, state=%s', connState.length)
+
     const wrapped = wrapper({conn, timeout: timeout || 2000})
+
+    // TODO: add support for protos without .detect() possibly using .directDetect and filtering them here (if one is found skip detect and assume this proto, then .stream() it)
+    // TODO: possibly add properties .stream() can detect, too?
+
     let result = await Promise.all(protocols.map(async (proto) => {
       try {
         let res = await proto.detect(wrapped.createReader()) // TODO: evaluate if reader needs cleanup (abort src) or if gc does everything?
@@ -30,12 +41,18 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
     result = result.filter(Boolean)
     if (result.length > 1) throw new Error('Multiple protocols found: ' + result.map(p => p[0]).join('&'))
     connState.push(result)
-    conn = wrapper.restore()
+    conn = wrapped.restore()
+
+    if (!result) { // if we didn't get a result here we are in an undefined state basically. best is to do 404
+      log('detect did not detect any proto')
+      break
+    }
 
     handlers = handlers.filter(({address}) => fwAddr.match(address, connState))
     let handler = handlers[0]
 
     if (!handler) {
+      log('no handlers for detected protos')
       break
     }
 
@@ -47,6 +64,8 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
     if (proto.children) {
       protocols = proto.children // ex: tcp -> [ssl, http, ssh, ...]
     }
+
+    log('continue with handler for %s %s', proto.name, matchLvl)
 
     if (matchLvl === 2) {
       let connRes
@@ -67,6 +86,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
       }
       found = handler
       handler.handle(connRes, connState)
+      log('finish')
       break
     } else if (matchLvl === 1) { // means we need to do stream first, but stream is NOT the end action
       switch (currentPart.action) {
@@ -83,7 +103,10 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
     }
   }
 
-  if (!found) return on404(wrapper.restore(), connState)
+  if (!found) {
+    log('404')
+    on404(wrapper.restore(), connState)
+  }
 
   return {connState, found}
 }
