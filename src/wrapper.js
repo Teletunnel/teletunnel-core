@@ -3,7 +3,7 @@
 const Cache = require('pull-cache')
 const Reader = require('pull-reader')
 const pull = require('pull-stream')
-const Connection = require('interface-connection')
+const Connection = require('interface-connection').Connection
 
 module.exports = ({timeout, conn}) => {
   let cache = Cache()
