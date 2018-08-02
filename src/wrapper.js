@@ -20,7 +20,9 @@ module.exports = ({timeout, conn}) => {
         read: (bytes) => new Promise((resolve, reject) => {
           reader.read(bytes, (err, res) => err ? reject(err) : resolve(res))
         }),
-        getObservedAddrs: conn.getObservedAddrs.bind(conn)
+        getAddrs: () => new Promise((resolve, reject) => {
+          conn.getObservedAddrs((err, res) => err ? reject(err) : resolve(res))
+        })
       }
     },
     restore: () => {

@@ -2,7 +2,7 @@
   "name": "teletunnel-core",
   "version": "0.0.1",
   "description": "The core module of the teletunnel protocol",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "lint": "aegir lint",
     "test": "aegir test",
