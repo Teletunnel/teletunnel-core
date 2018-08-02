@@ -106,7 +106,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
 
   if (!found) {
     log('404')
-    on404(wrapper.restore(), connState)
+    on404(conn, connState)
   }
 
   return {connState, found}
