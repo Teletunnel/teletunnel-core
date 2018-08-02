@@ -9,7 +9,7 @@ const pull = require('pull-stream')
 const Connection = require('interface-connection').Connection
 
 function default404 (conn, connState) {
-  pull(pull.values([]), conn, pull.abort(true))
+  pull(pull.values([]), conn, pull.drain())
 }
 
 // TODO: fix "functions in loop"
@@ -41,6 +41,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
 
     result = result.filter(Boolean)
     if (result.length > 1) throw new Error('Multiple protocols found: ' + result.map(p => p[0]).join('&'))
+    result = result[0]
     connState.push(result)
     conn = new Connection(wrapped.restore(), conn)
 
@@ -49,11 +50,13 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
       break
     }
 
+    log('detected %o', result)
+
     handlers = handlers.filter(({address}) => fwAddr.match(address, connState))
     let handler = handlers[0]
 
     if (!handler) {
-      log('no handlers for detected protos')
+      log('no handlers for detected proto')
       break
     }
 
