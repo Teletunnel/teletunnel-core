@@ -6,6 +6,7 @@ const log = debug('teletunnel:core:sorting-hat')
 const fwAddr = require('forward-addr')
 const wrapper = require('./wrapper')
 const pull = require('pull-stream')
+const Connection = require('interface-connection').Connection
 
 function default404 (conn, connState) {
   pull(pull.values([]), conn, pull.abort(true))
@@ -41,7 +42,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
     result = result.filter(Boolean)
     if (result.length > 1) throw new Error('Multiple protocols found: ' + result.map(p => p[0]).join('&'))
     connState.push(result)
-    conn = wrapped.restore()
+    conn = new Connection(wrapped.restore(), conn)
 
     if (!result) { // if we didn't get a result here we are in an undefined state basically. best is to do 404
       log('detect did not detect any proto')
@@ -71,7 +72,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
       let connRes
       switch (currentPart.action) {
         case 'stream': {
-          connRes = await proto.stream(conn, result[2])
+          connRes = new Connection(await proto.stream(conn, result[2]), conn)
           break
         }
         case 'forward': {
@@ -91,7 +92,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
     } else if (matchLvl === 1) { // means we need to do stream first, but stream is NOT the end action
       switch (currentPart.action) {
         case 'stream': {
-          conn = await proto.stream(conn, result[2])
+          conn = new Connection(await proto.stream(conn, result[2]), conn)
           break
         }
         case 'sub': {
