@@ -6,11 +6,7 @@ const pull = require('pull-stream')
 const Connection = require('interface-connection').Connection
 
 module.exports = ({timeout, conn}) => {
-  let cache = Cache()
-  pull(
-    conn.source,
-    cache
-  )
+  let cache = Cache(conn.source)
 
   return {
     createReader: () => {
