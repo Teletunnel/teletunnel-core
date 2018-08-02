@@ -1,0 +1,16 @@
+{
+  "name": "teletunnel-core",
+  "version": "0.0.1",
+  "description": "The core module of the teletunnel protocol",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "teletunnel",
+    "teletunnel-protocol",
+    "core"
+  ],
+  "author": "Maciej Krüger <mkg20001@gmail.com>",
+  "license": "MPL-2.0"
+}
