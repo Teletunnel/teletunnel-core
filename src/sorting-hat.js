@@ -44,6 +44,10 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
     let currentPart = handler.address[connState.length - 1]
     let proto = protocols.filter(proto => currentPart.protocol === proto.name)[0]
 
+    if (proto.children) {
+      protocols = proto.children // ex: tcp -> [ssl, http, ssh, ...]
+    }
+
     if (matchLvl === 2) {
       let connRes
       switch (currentPart.action) {
@@ -61,7 +65,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
         }
         default: throw new TypeError(currentPart.action)
       }
-      found = true
+      found = handler
       handler.handle(connRes, connState)
       break
     } else if (matchLvl === 1) { // means we need to do stream first, but stream is NOT the end action
@@ -80,4 +84,6 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
   }
 
   if (!found) return on404(wrapper.restore(), connState)
+
+  return {connState, found}
 }
