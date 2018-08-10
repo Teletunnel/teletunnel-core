@@ -21,7 +21,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
   let found = false
 
   while (true) {
-    log('try detect, state=%s', connState.length)
+    log('try detect, state=%s, protos=%s', connState.length, protocols.map(p => p.name).join(';'))
 
     const wrapped = wrapper({conn, timeout: timeout || 2000})
 
@@ -35,6 +35,7 @@ module.exports = async function sortingHat (conn, {timeout, protocols, handlers,
         if (!res.state) return [proto.name, res]
         return [proto.name, res.props, res.state] // this is for more complex protos that need to pass a state to .stream() or subprotos
       } catch (e) {
+        log(e)
         return false
       }
     }))
